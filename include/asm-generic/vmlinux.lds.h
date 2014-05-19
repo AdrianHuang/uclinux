@@ -758,3 +758,7 @@
 	BSS(bss_align)							\
 	. = ALIGN(stop_align);						\
 	VMLINUX_SYMBOL(__bss_stop) = .;
+
+/* copied from asm/memory.h to workaround
+ * arm-none-eabi-ld:arch/arm/kernel/vmlinux.lds:364: syntax error */
+#define XIP_VIRT_ADDR(physaddr)  (MODULES_VADDR + ((physaddr) & 0x000fffff))
