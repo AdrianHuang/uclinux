@@ -364,7 +364,7 @@ void __init stm32_iomux_init(void)
 	case PLATFORM_STM32_STM3220G_EVAL:
 	case PLATFORM_STM32_STM3240G_EVAL:
 	case PLATFORM_STM32_STM_SOM:
-	case PLATFORM_STM32_STM_DISCO:
+	case PLATFORM_STM32_STM32F429_DISCO:
 
 #if defined(CONFIG_STM32_USART1)
 		gpio_dsc.port = 0;
@@ -594,19 +594,22 @@ uartdone:
 	 * on the STM32F429 Discovery board.
 	 * !!! That GPIO may have other connections on other boards.
 	 */
-	if (platform == PLATFORM_STM32_STM_DISCO) {
+	if (platform == PLATFORM_STM32_STM32F429_DISCO) {
 		/* PA0 = User Push Button */
 		gpio_dsc.port = 0;
 		gpio_dsc.pin  = 0;
 		stm32f2_gpio_config(&gpio_dsc, STM32F2_GPIO_ROLE_IN);
-		/* PE3 = LED_3
+		/* PG13 = LD3(Green), PG14 = LD4(Red)
 		 * Here, things are tricky. The default hardware routes
-		 * the LED to a pin that interferes with RMII. The config
-		 * below assumes that the RMII signal is disconnected from
-		 * the LED and instead the LED is connected to the PE3 GPIO.
+		 * the LEDs to pins that interfere with RMII. The config
+		 * below assumes that the RMII signals are disconnected from
+		 * the LEDs and instead the LEDs are connected to PG13 and PG14.
 		 */
-		gpio_dsc.port = 4;
-		gpio_dsc.pin  = 3;
+		gpio_dsc.port = 6;
+		gpio_dsc.pin  = 13;
+		stm32f2_gpio_config(&gpio_dsc, STM32F2_GPIO_ROLE_OUT);
+		gpio_dsc.port = 6;
+		gpio_dsc.pin  = 14;
 		stm32f2_gpio_config(&gpio_dsc, STM32F2_GPIO_ROLE_OUT);
 	}
 
