@@ -78,6 +78,12 @@
 ENTRY(stext)
 	setmode	PSR_F_BIT | PSR_I_BIT | SVC_MODE, r9 @ ensure svc mode
 						@ and irqs disabled
+#ifdef CONFIG_XIP_KERNEL
+	bl  __relocate_xipdata
+#endif
+#if defined(CONFIG_MTD_UCLINUX) && defined(CONFIG_MTD_UCLINUX_RELOCATE)
+	bl  __relocate_romfs
+#endif
 	mrc	p15, 0, r9, c0, c0		@ get processor id
 	bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
 	movs	r10, r5				@ invalid processor (r5=0)?
