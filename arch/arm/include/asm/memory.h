@@ -110,6 +110,13 @@
 #define MODULES_END		(END_MEM)
 #define MODULES_VADDR		(PHYS_OFFSET)
 
+/*
+ * The XIP kernel gets mapped at the bottom of the module vm area.
+ * Since we use sections to map it, this macro replaces the physical address
+ * with its virtual address while keeping offset from the base section.
+ */
+#define XIP_VIRT_ADDR(physaddr)  (physaddr)
+
 #endif /* !CONFIG_MMU */
 
 /*
