@@ -853,7 +853,7 @@ static ssize_t extract_entropy(struct entropy_store *r, void *buf,
 			       size_t nbytes, int min, int reserved)
 {
 	ssize_t ret = 0, i;
-	__u8 tmp[EXTRACT_SIZE];
+	__u8 tmp[EXTRACT_SIZE] __attribute__((aligned(32)));
 	unsigned long flags;
 
 	xfer_secondary_pool(r, nbytes);
@@ -886,7 +886,7 @@ static ssize_t extract_entropy_user(struct entropy_store *r, void __user *buf,
 				    size_t nbytes)
 {
 	ssize_t ret = 0, i;
-	__u8 tmp[EXTRACT_SIZE];
+	__u8 tmp[EXTRACT_SIZE] __attribute__((aligned(32)));
 
 	xfer_secondary_pool(r, nbytes);
 	nbytes = account(r, nbytes, 0, 0);
