@@ -29,11 +29,9 @@
 
 static inline void putc(char c)
 {
-	volatile u32	*uart_sr = (u32 *)(STM32_DBG_USART_APBX +
-					   STM32_DBG_USART_OFFS +
+	volatile u32	*uart_sr = (u32 *)(STM32_DBG_USART_BASE +
 					   STM32_UART_SR);
-	volatile u32	*uart_dr = (u32 *)(STM32_DBG_USART_APBX +
-					   STM32_DBG_USART_OFFS +
+	volatile u32	*uart_dr = (u32 *)(STM32_DBG_USART_BASE +
 					   STM32_UART_DR);
 
 	while (!(*uart_sr & STM32_USART_SR_TXE))
