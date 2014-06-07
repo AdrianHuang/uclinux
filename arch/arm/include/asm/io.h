@@ -201,8 +201,8 @@ extern void _memset_io(volatile void __iomem *, int, size_t);
 
 #define memset_io(c,v,l)	_memset_io(__mem_pci(c),(v),(l))
 #define memcpy_fromio(a,c,l)	_memcpy_fromio((a),__mem_pci(c),(l))
-#define memcpy_fromiow(a,c,l)	_memcpy_fromiow((a),__mem_pci(c),(l))
-#define memcpy_fromiol(a,c,l)	_memcpy_fromiol((a),__mem_pci(c),(l))
+//#define memcpy_fromiow(a,c,l)	_memcpy_fromiow((a),__mem_pci(c),(l))
+//#define memcpy_fromiol(a,c,l)	_memcpy_fromiol((a),__mem_pci(c),(l))
 #define memcpy_toio(c,a,l)	_memcpy_toio(__mem_pci(c),(a),(l))
 #define memcpy_toiow(c,a,l)	_memcpy_toiow(__mem_pci(c),(a),(l))
 #define memcpy_toiol(c,a,l)	_memcpy_toiol(__mem_pci(c),(a),(l))
