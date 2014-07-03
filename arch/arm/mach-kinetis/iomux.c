@@ -238,9 +238,13 @@ static const struct kinetis_gpio_pin_config twrk70f120m_iomux[] = {
 	{{KINETIS_GPIO_PORT_E, 4}, KINETIS_GPIO_CONFIG_MUX(4)},
 	/* E.5 = SDHC0_D2 */
 	{{KINETIS_GPIO_PORT_E, 5}, KINETIS_GPIO_CONFIG_MUX(4)},
+#if defined(CONFIG_KINETIS_GPIO_INT)
+	{{KINETIS_GPIO_PORT_E, 28}, KINETIS_GPIO_CONFIG_PULLUP(1)},
+#else
 	/* E.28 = GPIO (Card detect) */
 	{{KINETIS_GPIO_PORT_E, 28}, KINETIS_GPIO_CONFIG_PULLUP(1) |
 	 KINETIS_GPIO_CONFIG_IRQC_EITHER},
+#endif
 #endif
 };
 
@@ -358,8 +362,23 @@ static const struct kinetis_gpio_pin_config k70som_iomux[] = {
 	{{KINETIS_GPIO_PORT_B, 18}, KINETIS_GPIO_CONFIG_MUX(1)},
 	{{KINETIS_GPIO_PORT_B, 19}, KINETIS_GPIO_CONFIG_MUX(1)},
 #endif
-#endif /* CONFIG_GPIOLIB */
+#if 0
+	/*
+	 * Pin configuration for the User LEDs and the "User Button" installed
+	 * on the TWR-SOM-BSB-2A baseboard. Other baseboards may need
+	 * different pin configurations.
+	 */
 
+	/*
+	 * The "User Button" is at PTC3, with external pullup */
+	{{KINETIS_GPIO_PORT_C, 3}, KINETIS_GPIO_CONFIG_MUX(1)},
+
+	/* LEDs DS3 and DS4, correspondingly */
+	{{KINETIS_GPIO_PORT_B, 18}, KINETIS_GPIO_CONFIG_MUX(1)},
+	{{KINETIS_GPIO_PORT_B, 19}, KINETIS_GPIO_CONFIG_MUX(1)},
+#endif
+
+#endif /* CONFIG_GPIOLIB */
 
 #if defined(CONFIG_MMC_ESDHC)
 	/* E.0 = SDHC0_D1 */
@@ -375,8 +394,12 @@ static const struct kinetis_gpio_pin_config k70som_iomux[] = {
 	/* E.5 = SDHC0_D2 */
 	{{KINETIS_GPIO_PORT_E, 5}, KINETIS_GPIO_CONFIG_MUX(4)},
 	/* E.28 = GPIO (Card detect) */
+#if defined(CONFIG_KINETIS_GPIO_INT)
+	{{KINETIS_GPIO_PORT_E, 28}, KINETIS_GPIO_CONFIG_PULLUP(1)},
+#else
 	{{KINETIS_GPIO_PORT_E, 28}, KINETIS_GPIO_CONFIG_PULLUP(1) |
 	 KINETIS_GPIO_CONFIG_IRQC_EITHER},
+#endif
 #endif
 
 #if defined(CONFIG_KINETIS_SPI1)

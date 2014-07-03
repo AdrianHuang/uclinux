@@ -187,6 +187,7 @@ static int mmc_decode_scr(struct mmc_card *card)
 static int mmc_read_switch(struct mmc_card *card)
 {
 	int err;
+	int i;
 	u8 *status;
 
 	if (card->scr.sda_vsn < SCR_SPEC_VER_1)
@@ -208,7 +209,11 @@ static int mmc_read_switch(struct mmc_card *card)
 		return -ENOMEM;
 	}
 
-	err = mmc_sd_switch(card, 0, 0, 1, status);
+	for (i = 0; i < 9; i++) {
+		err = mmc_sd_switch(card, 0, 0, 1, status);
+		if (err != -EBUSY)
+			break;
+	}
 	if (err) {
 		/* If the host or the card can't do the switch,
 		 * fail more gracefully. */
@@ -240,6 +245,7 @@ out:
 static int mmc_switch_hs(struct mmc_card *card)
 {
 	int err;
+	int i;
 	u8 *status;
 
 	if (card->scr.sda_vsn < SCR_SPEC_VER_1)
@@ -263,7 +269,11 @@ static int mmc_switch_hs(struct mmc_card *card)
 		return -ENOMEM;
 	}
 
-	err = mmc_sd_switch(card, 1, 0, 1, status);
+	for (i = 0; i < 9; i++) {
+		err = mmc_sd_switch(card, 0, 0, 1, status);
+		if (err != -EBUSY)
+			break;
+	}
 	if (err)
 		goto out;
 

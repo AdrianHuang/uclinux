@@ -30,20 +30,30 @@
 #include <linux/uaccess.h>
 #include <linux/irq.h>
 #include <linux/io.h>
+#include <linux/gpio.h>
 #include <linux/slab.h>
 #include <linux/mmc/host.h>
+#include <linux/platform_device.h>
 
 #include <asm/dma.h>
 #include <asm/page.h>
 #include <mach/dmac.h>
 #include <mach/dmainit.h>
-
-#include <linux/platform_device.h>
 #include <mach/cache.h>
+#if defined(CONFIG_KINETIS_GPIO_INT)
+#include <mach/gpio.h>
+#endif
 
 #include "esdhc.h"
 #define DRIVER_NAME "esdhc"
 
+#if defined(CONFIG_KINETIS_GPIO_INT)
+
+#define KINETIS_CARD_DETECT_GPIO	\
+	((KINETIS_GPIO_PORT_E * KINETIS_GPIO_PORT_PINS) + 28)
+static int card_detect_extern_irq;
+
+#else
 
 //#if defined(CONFIG_ESDHC_DETECT_USE_EXTERN_IRQ1)
 //#define card_detect_extern_irq (64 + 1)
@@ -52,6 +62,8 @@
 //#else
 #define card_detect_extern_irq 91 /* K70 PORT E int */
 //#endif
+//
+#endif
 
 #undef ESDHC_DMA_KMALLOC
 
@@ -232,7 +244,7 @@ static void esdhc_init(struct esdhc_host *host)
 	DBG(" ### PROCTL: init %x\n", fsl_readl(host->ioaddr + ESDHC_PROTOCOL_CONTROL));
 
 	fsl_writel(host->ioaddr + ESDHC_SYSTEM_CONTROL,
-			fsl_readl(host->ioaddr + ESDHC_SYSTEM_CONTROL) | 0x08000000);
+		fsl_readl(host->ioaddr + ESDHC_SYSTEM_CONTROL) | 0x08000000);
 	while (fsl_readl(host->ioaddr + ESDHC_SYSTEM_CONTROL) & 0x08000000);
 }
 
@@ -248,8 +260,8 @@ static void reset_regs(struct esdhc_host *host)
 		ESDHC_INT_END_BIT | ESDHC_INT_CRC | ESDHC_INT_TIMEOUT |
 		ESDHC_INT_DATA_AVAIL | ESDHC_INT_SPACE_AVAIL |
 		ESDHC_INT_DMA_END | ESDHC_INT_DATA_END | ESDHC_INT_RESPONSE;
-
-	fsl_writel(host->ioaddr + ESDHC_INT_ENABLE, intmask & ~ESDHC_INT_RESPONSE);
+	fsl_writel(host->ioaddr + ESDHC_INT_ENABLE,
+			intmask & ~ESDHC_INT_RESPONSE);
 	fsl_writel(host->ioaddr + ESDHC_SIGNAL_ENABLE, intmask);
 
 	if (host->bus_width == MMC_BUS_WIDTH_4) {
@@ -1254,6 +1266,19 @@ static void esdhc_tasklet_finish(unsigned long param)
 	host->cmd = NULL;
 	host->data = NULL;
 
+	if (mrq->cmd && mrq->cmd->error == MMC_ERR_TIMEOUT) {
+		mrq->cmd->error = -EBUSY;
+	}
+	else if (mrq->cmd && mrq->cmd->error != MMC_ERR_NONE) {
+		 mrq->cmd->error = -EIO;
+	}
+	if (mrq->data && mrq->data->error == MMC_ERR_TIMEOUT) {
+		mrq->data->error = -EBUSY;
+	}
+	else if (mrq->data && mrq->data->error != MMC_ERR_NONE) {
+		 mrq->data->error = -EIO;
+	}
+
 	spin_unlock_irqrestore(&host->lock, flags);
 
 	mmc_request_done(host->mmc, mrq);
@@ -1399,9 +1424,27 @@ static irqreturn_t esdhc_detect_irq(int irq, void *dev_id)
 {
 	irqreturn_t result = IRQ_HANDLED;
 	struct esdhc_host *host = dev_id;
+#if !defined(CONFIG_KINETIS_GPIO_INT)
 	u32  irq_status = 0;
-#if 1
+#endif
+
 	spin_lock(&host->lock);
+
+#if defined(CONFIG_KINETIS_GPIO_INT)
+
+	/*
+	 * Experimentally, it takes that long for the SD Card detect
+	 * signal to get stable. Of course, it is a bad thing to delay
+	 * in an IRQ handler since it affects real-time responsivness
+	 * of the kernel. This is why we don't attempt to determine
+	 * the status (low/high) of the SD Card detect line.
+	 * The upper layers of the stack will do that anyhow.
+
+	udelay(2000);
+	irq_status = gpio_get_value(KINETIS_CARD_DETECT_GPIO);
+
+	 */
+#else
 
 	irq_status = *(volatile unsigned int *)0x400ff110 & (1 << 28);
 	*(volatile unsigned int *)0x4004D0A0 = (1 << 28);/* clear PTE28 int */
@@ -1426,12 +1469,13 @@ static irqreturn_t esdhc_detect_irq(int irq, void *dev_id)
 		}
 		host->card_insert = 0;
 	}
+#endif
 
 	mmc_detect_change(host->mmc, msecs_to_jiffies(500));
 
 	result = IRQ_HANDLED;
 	spin_unlock(&host->lock);
-#endif
+
 	return result;
 }
 
@@ -1741,7 +1785,7 @@ static int esdhc_probe_slot(struct platform_device *pdev, int slot)
 	setup_timer(&host->timer, esdhc_timeout_timer, (unsigned long)host);
 
 	setup_timer(&timer1, esdhc_timer1, (unsigned long)host);
-	mod_timer(&timer1, jiffies + 5 * HZ);
+	mod_timer(&timer1, jiffies + 1 * HZ);
 
 	esdhc_init(host);
 
@@ -1752,9 +1796,26 @@ static int esdhc_probe_slot(struct platform_device *pdev, int slot)
 		goto untasklet;
 	}
 
+#if defined(CONFIG_KINETIS_GPIO_INT)
+	ret = gpio_request(KINETIS_CARD_DETECT_GPIO, "GPIO");
+	if (ret) {
+		printk(KERN_INFO "%s: GPIO %d busy\n", __func__,
+			KINETIS_CARD_DETECT_GPIO);
+		goto gpio_busy;
+	}
+	gpio_direction_input(KINETIS_CARD_DETECT_GPIO);
+
+	card_detect_extern_irq = gpio_to_irq(KINETIS_CARD_DETECT_GPIO);
+	ret = request_irq(card_detect_extern_irq,
+			esdhc_detect_irq,
+			IRQF_VALID |
+			IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+			host->slot_descr, host);
+#else
 	ret = request_irq(card_detect_extern_irq,
 			esdhc_detect_irq, IRQF_DISABLED,
 			host->slot_descr, host);
+#endif
 	if (ret) {
 		printk(KERN_INFO "%s: request irq fail %x\n", __func__, ret);
 		goto untasklet1;
@@ -1777,7 +1838,8 @@ static int esdhc_probe_slot(struct platform_device *pdev, int slot)
 #if defined(USE_EDMA)
 	ret = kinetis_dma_ch_get(KINETIS_DMACH_ESDHC);
 	if (ret < 0)
-		printk("%s: failed get eDMA chan %d (%d)\n", __func__, KINETIS_DMACH_ESDHC, ret);
+		printk("%s: failed get eDMA chan %d (%d)\n", __func__,
+			KINETIS_DMACH_ESDHC, ret);
 #endif
 
 #ifdef ESDHC_DMA_KMALLOC
@@ -1798,19 +1860,26 @@ static int esdhc_probe_slot(struct platform_device *pdev, int slot)
 					      GFP_DMA | GFP_KERNEL);
 #endif
 
-	//esdhc_reset(host, ESDHC_INIT_CARD);
-	//host->card_insert = 1;
-	//mmc_detect_change(host->mmc, msecs_to_jiffies(500));
+#if defined(CONFIG_KINETIS_GPIO_INT)
+	esdhc_reset(host, ESDHC_INIT_CARD);
+	host->card_insert = 1;
+	mmc_detect_change(host->mmc, msecs_to_jiffies(500));
+#else
 	/* clear Card Detect pending int */
 	*(volatile unsigned int *)0x4004D0A0 = (1 << 28);
 	DBG("cd_sw %x %x\n", *(volatile unsigned int *)0x400ff110,
 		fsl_readl(host->ioaddr + ESDHC_INT_STATUS));
+#endif
 
 	return 0;
 
 unaddhost:
 	free_irq(card_detect_extern_irq, host);
 untasklet1:
+#if defined(CONFIG_KINETIS_GPIO_INT)
+	gpio_free(KINETIS_CARD_DETECT_GPIO);
+gpio_busy:
+#endif
 	free_irq(host->irq, host);
 untasklet:
 	tasklet_kill(&host->card_tasklet);
@@ -1840,6 +1909,10 @@ static void esdhc_remove_slot(struct platform_device *pdev, int slot)
 	mmc_remove_host(mmc);
 
 	esdhc_reset(host, ESDHC_RESET_ALL);
+
+#if defined(CONFIG_KINETIS_GPIO_INT)
+	gpio_free(KINETIS_CARD_DETECT_GPIO);
+#endif
 
 	free_irq(card_detect_extern_irq, host);
 

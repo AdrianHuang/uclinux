@@ -896,6 +896,35 @@ error:
 	return retval;
 }
 
+
+#ifdef CONFIG_PM
+
+static int fsl_nfc_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	struct mtd_info *mtd = platform_get_drvdata(pdev);
+	int ret = 0;
+
+	if (mtd) {
+		ret = mtd->suspend(mtd);
+	}
+
+	return ret;
+}
+
+static int fsl_nfc_resume(struct platform_device *pdev)
+{
+	struct mtd_info *mtd = platform_get_drvdata(pdev);
+	int ret = 0;
+
+	if (mtd) {
+		mtd->resume(mtd);
+	}
+
+	return ret;
+}
+
+#endif
+
 static int __exit
 fsl_nfc_remove(struct platform_device *pdev)
 {
@@ -913,8 +942,10 @@ fsl_nfc_remove(struct platform_device *pdev)
 static struct platform_driver fsl_nfc_driver = {
 	.probe		= fsl_nfc_probe,
 	.remove		= __exit_p(fsl_nfc_remove),
-	.suspend	= NULL,
-	.resume		= NULL,
+#ifdef CONFIG_PM
+	.suspend	= fsl_nfc_suspend,
+	.resume		= fsl_nfc_resume,
+#endif
 	.driver		= {
 		.name	= DRV_NAME,
 		.owner	= THIS_MODULE,
