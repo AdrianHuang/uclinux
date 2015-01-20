@@ -210,7 +210,7 @@ void __init stm32_i2c_init(void)
 
 #endif
 	}
-	else if (p == PLATFORM_STM32_STM_DISCO) {
+	else if (p == PLATFORM_STM32_STM32F429_DISCO) {
 #if defined(CONFIG_STM32_I2C3)
 
 #if defined(CONFIG_GPIO_PCAL6416A)

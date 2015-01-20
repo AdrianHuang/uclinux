@@ -275,7 +275,7 @@ void __init stm32_spi_init(void)
 		port = SPI_FLASH_CS_PORT__STM32F439_SOM;
 		pin = SPI_FLASH_CS_PIN__STM32F439_SOM;
 	}
-	else if (p == PLATFORM_STM32_STM_DISCO) {
+	else if (p == PLATFORM_STM32_STM32F429_DISCO) {
 		bus = 3;
 		port = SPI_FLASH_CS_PORT__STM32F4_DISCO;
 		pin = SPI_FLASH_CS_PIN__STM32F4_DISCO;
@@ -284,7 +284,7 @@ void __init stm32_spi_init(void)
 
 	if (p == PLATFORM_STM32_STM_SOM ||
 	    p == PLATFORM_STM32_STM_STM32F439_SOM ||
-	    p == PLATFORM_STM32_STM_DISCO) {
+	    p == PLATFORM_STM32_STM32F429_DISCO) {
 
 		/* This assumes that there is an SPI Flash device
 		 * handwired to SPI5 on the breadboard area of SOM-BSB-EXT.
