@@ -427,6 +427,16 @@ static irqreturn_t i2c_stm32_irq(int irq, void *d)
 				c->msg_i = 0;
 				writel(cr1 | I2C_STM32_CR1_STA,
 					&I2C_STM32(c)->cr1);
+
+				/*
+				 * We need to make sure the bit TRA is cleared
+				 * after issuing the repeated START. Or, the
+				 * unexpected behavior will be observed in the
+				 * upcoming transcations.
+				 */
+				do {
+					sr2 = readl(&I2C_STM32(c)->sr2);
+				} while (sr2 & I2C_STM32_SR2_TRA);
 			}
 		}
 		else if (sr1 & I2C_STM32_SR1_RXNE) {
