@@ -329,6 +329,30 @@ config EZX_PCAP
 	  This enables the PCAP ASIC present on EZX Phones. This is
 	  needed for MMC, TouchScreen, Sound, USB, etc..
 
+config MFD_STMPE
+	bool "STMicroelectronics STMPE"
+	depends on I2C=y && GENERIC_HARDIRQS
+	select MFD_CORE
+	help
+	  Support for the STMPE family of I/O Expanders from
+	  STMicroelectronics.
+
+	  Currently supported devices are:
+
+		STMPE811: GPIO, Touchscreen
+		STMPE1601: GPIO, Keypad
+		STMPE1801: GPIO, Keypad
+		STMPE2401: GPIO, Keypad
+		STMPE2403: GPIO, Keypad
+
+	  This driver provides common support for accessing the device,
+	  additional drivers must be enabled in order to use the functionality
+	  of the device.  Currently available sub drivers are:
+
+		GPIO: stmpe-gpio
+		Keypad: stmpe-keypad
+		Touchscreen: stmpe-ts
+
 config MFD_88PM8607
 	bool "Support Marvell 88PM8607"
 	depends on I2C=y

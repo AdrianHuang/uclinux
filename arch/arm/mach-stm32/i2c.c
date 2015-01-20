@@ -34,6 +34,10 @@
 #include <linux/i2c/pcal6416a.h>
 #endif
 
+#if defined(CONFIG_MFD_STMPE)
+#include <linux/mfd/stmpe.h>
+#endif
+
 /* 
  * Size of the I2C controller register area
  */
@@ -220,6 +224,14 @@ void __init stm32_i2c_init(void)
 		};
 #endif
 
+#if defined(CONFIG_MFD_STMPE)
+		static struct stmpe_platform_data stmpe811_ioe_info = {
+			.id             = 0,
+		        .blocks         = 0x5,
+			.irq_trigger    = 1,
+		};
+#endif
+
 		static struct i2c_board_info __initdata
 			stm32f4_bdinfo_i2c3[] = {
 
@@ -234,6 +246,15 @@ void __init stm32_i2c_init(void)
 			I2C_BOARD_INFO("24c512", 0x57)
 		},
 #endif
+
+#if defined(CONFIG_MFD_STMPE)
+	        {
+			I2C_BOARD_INFO("stmpe811", 0x41),
+			.platform_data = &stmpe811_ioe_info,
+			.irq = 0,
+		}
+#endif
+
 };
 
 		i2c_register_board_info(2, stm32f4_bdinfo_i2c3,
