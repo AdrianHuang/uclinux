@@ -615,6 +615,7 @@ static void fbcon_prepare_logo(struct vc_data *vc, struct fb_info *info,
 			vc->vc_pos += lines * vc->vc_size_row;
 		}
 	}
+
 	scr_memsetw((unsigned short *) vc->vc_origin,
 		    erase,
 		    vc->vc_size_row * logo_lines);
@@ -3400,6 +3401,19 @@ err:
 	release_console_sem();
 	return count;
 }
+
+/* Adrian's exported functions. */
+void fbcon_clear_all(struct vc_data *vc)
+{
+	fbcon_clear(vc, 0, 0, vc->vc_rows, vc->vc_cols);
+}
+
+signed char fbcon_get_con2fb_map(int idx)
+{
+	return con2fb_map[idx];
+}
+
+/* End */
 
 static struct device_attribute device_attrs[] = {
 	__ATTR(rotate, S_IRUGO|S_IWUSR, show_rotate, store_rotate),

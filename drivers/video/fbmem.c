@@ -234,6 +234,13 @@ static void  fb_set_logo_truepalette(struct fb_info *info,
 	}
 }
 
+/* Adrian's defined function. */
+void *fb_get_set_logo_truepalette_fn(void)
+{
+	return &fb_set_logo_truepalette;
+}
+/* End */
+
 static void fb_set_logo_directpalette(struct fb_info *info,
 					     const struct linux_logo *logo,
 					     u32 *palette)
@@ -334,6 +341,19 @@ static struct logo_data {
 	const struct linux_logo *logo;
 } fb_logo __read_mostly;
 
+/* Adrian's defined function */
+struct linux_logo *fb_get_logo(void)
+{
+	return fb_logo.logo;
+}
+
+int fb_get_logo_needs_truepalette(void)
+{
+	return fb_logo.needs_truepalette;
+}
+
+/* End */
+
 static void fb_rotate_logo_ud(const u8 *in, u8 *out, u32 width, u32 height)
 {
 	u32 size = width * height, i;
@@ -425,6 +445,12 @@ static void fb_do_show_logo(struct fb_info *info, struct fb_image *image,
 			image->dy -= image->height + 8;
 		}
 	}
+}
+
+/* Adrian's defined function */
+void *fb_get_do_show_logo_fn(void)
+{
+	return &fb_do_show_logo;
 }
 
 static int fb_show_logo_line(struct fb_info *info, int rotate,

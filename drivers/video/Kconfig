@@ -2202,6 +2202,14 @@ config FB_STM32
 	  as a framebuffer. LTDC configured in u-boot.
 	  Product specs at <http://www.st.com>.
 
+config FB_MOVING_TUX
+	bool "STM32F4 Virtual framebuffer for moving Tux on LTDC"
+	depends on FB && FB_STM32
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  A tux moving kernel module on LTDC for STM32F4
 
 source "drivers/video/omap/Kconfig"
 source "drivers/video/omap2/Kconfig"
