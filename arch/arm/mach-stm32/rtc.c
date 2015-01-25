@@ -85,6 +85,12 @@ void __init stm32_rtc_init(void)
 	/* Allow access to RTC */
 	STM32F2_PWR->cr |= STM32F2_PWR_CR_DBP_MSK;
 
+	/*
+	 * This write memory barrier ensures that the write operation to
+	 * the DBP bit of Power Control Register is performed firstly.
+	 */
+	wmb();
+
 	/* Disable the low-speed external oscillator */
 	STM32_RCC->bdcr = 0;
 	/* Enable the low-speed external oscillator */
