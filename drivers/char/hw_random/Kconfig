@@ -186,3 +186,17 @@ config HW_RANDOM_MXC_RNGA
 	  module will be called mxc-rnga.
 
 	  If unsure, say Y.
+
+config HW_RANDOM_STM32
+	tristate "STM32 Random Number Generator support"
+	depends on HW_RANDOM && ARM_CORTEXM3
+	---help---
+	  This driver provides kernel-side support for a generic Random
+	  Number Generator used by configuring the rng register address
+	  0x50060800 of STM32 series (STM32F42xxx/STM32F43xxx/...).
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called stm32-rng.
+
+	  If unsure, say Y.
+
