@@ -22,10 +22,6 @@
 #ifndef _STM32_RNG_H
 #define _STM32_RNG_H
 
-#include <mach/stm32.h>
-
-#define STM32_RNG_BASE (STM32_AHB2PERITH_BASE + 0x60800)
-
 /*
  * STM32 RNG: Fields of Control Register
  */
@@ -43,8 +39,6 @@
 
 #define STM32_RCC_AHB2ENR_RNG (1 << 6)		/* RNG clock enable	*/
 
-#define STM32_RNG ((volatile struct stm32_rng_regs *) STM32_RNG_BASE)
-
 /* The clock of PLL48CLK is less than 48 MHz. */
 #define STM32_RNG_PLL48CLK	48
 
@@ -55,13 +49,5 @@
  * The unit of this macro is nanosecond.
  */
 #define STM32_RNG_DELAY_NS (40 * 1000 / STM32_RNG_PLL48CLK)
-
-struct stm32_rng_regs {
-	u32	cr;	/* Control Register */
-	u32	sr;	/* Status Register */
-	u32	dr;	/* Data Register */
-};
-
-int stm32_rng_read_number(unsigned long, u32 *);
 
 #endif
