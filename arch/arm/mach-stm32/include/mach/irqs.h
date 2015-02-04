@@ -26,8 +26,10 @@
 
 #ifdef CONFIG_ARCH_STM32F1
 #define NR_IRQS		68	/* STM32F1 */
+#elif CONFIG_MFD_STMPE
+#define NR_IRQS		99	/* STM32F4 + 8 internal interrupts (stmpe811) */
 #else
-#define NR_IRQS		90	/* STM32F2 */
+#define NR_IRQS		91	/* STM32F4 */
 #endif
 
 #endif
