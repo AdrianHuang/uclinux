@@ -50,4 +50,6 @@
  */
 #define STM32_RNG_DELAY_NS (40 * 1000 / STM32_RNG_PLL48CLK)
 
+int stm32_rng_read_number(unsigned long, u32 *);
+
 #endif

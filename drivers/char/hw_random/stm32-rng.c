@@ -38,13 +38,10 @@ struct stm32_rng_regs {
 #define STM32_RNG_BASE (STM32_AHB2PERITH_BASE + 0x60800)
 #define STM32_RNG ((volatile struct stm32_rng_regs *) STM32_RNG_BASE)
 
-static int stm32_rng_data_read(struct hwrng *rng, u32 *buf)
+int stm32_rng_read_number(unsigned long reg_addr, u32 *buf)
 {
-	volatile struct stm32_rng_regs *rng_regs = (void *) rng->priv;
+	volatile struct stm32_rng_regs *rng_regs = (void *) reg_addr;
 	int data_len = 0;
-
-	if (!rng_regs)
-		return data_len;
 
 	/* Delay a period of time to get the next random number. */
 	ndelay(STM32_RNG_DELAY_NS);
@@ -55,6 +52,11 @@ static int stm32_rng_data_read(struct hwrng *rng, u32 *buf)
 	}
 
 	return data_len;
+}
+
+static int stm32_rng_data_read(struct hwrng *rng, u32 *buffer)
+{
+	return stm32_rng_read_number(rng->priv, buffer);
 }
 
 static struct hwrng stm32_rng_ops = {
