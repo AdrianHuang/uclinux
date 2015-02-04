@@ -25,6 +25,8 @@
 #ifndef _MACH_STM32_EXTI_H_
 #define _MACH_STM32_EXTI_H_
 
+/* GPIO Pin 15/EXTI15 */
+#define STM32F2_EXTI_LINE_GPIO_15	15
 /* RTC Alarm event */
 #define STM32F2_EXTI_LINE_RTC_ALARM	17
 /* RTC Tamper and TimeStamp events */

@@ -25,6 +25,10 @@
 
 #include <linux/mfd/stmpe.h>
 
+#ifdef CONFIG_ARCH_STM32
+#include <mach/exti.h>
+#endif
+
 /* Register layouts and functionalities are identical on all stmpexxx variants
  * with touchscreen controller
  */
@@ -118,6 +122,7 @@ static void stmpe_work(struct work_struct *work)
 	__stmpe_reset_fifo(ts->stmpe);
 
 	input_report_abs(ts->idev, ABS_PRESSURE, 0);
+	input_report_key(ts->idev, BTN_TOUCH, 0);
 	input_sync(ts->idev);
 }
 
@@ -151,6 +156,7 @@ static irqreturn_t stmpe_ts_handler(int irq, void *data)
 	input_report_abs(ts->idev, ABS_X, x);
 	input_report_abs(ts->idev, ABS_Y, y);
 	input_report_abs(ts->idev, ABS_PRESSURE, z);
+	input_report_key(ts->idev, BTN_TOUCH, 1);
 	input_sync(ts->idev);
 
        /* flush the FIFO after we have read out our values. */
@@ -163,6 +169,9 @@ static irqreturn_t stmpe_ts_handler(int irq, void *data)
 	/* start polling for touch_det to detect release */
 	schedule_delayed_work(&ts->work, HZ / 50);
 
+#ifdef CONFIG_ARCH_STM32
+	stm32_exti_clear_pending(STM32F2_EXTI_LINE_GPIO_15);
+#endif
 	return IRQ_HANDLED;
 }
 
@@ -321,6 +330,7 @@ static int __devinit stmpe_input_probe(struct platform_device *pdev)
 		goto err_free_irq;
 
 	idev->name = STMPE_TS_NAME;
+	idev->phys = STMPE_TS_NAME"/input0";
 	idev->id.bustype = BUS_I2C;
 	idev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	idev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
@@ -339,6 +349,11 @@ static int __devinit stmpe_input_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Could not register input device\n");
 		goto err_free_irq;
 	}
+
+#ifdef CONFIG_ARCH_STM32
+	/* Enable the exti interrupt of GPIO pin 15, which maps to EXTI15. */
+	stm32_exti_enable_int(STM32F2_EXTI_LINE_GPIO_15, 1);
+#endif
 
 	return ret;
 

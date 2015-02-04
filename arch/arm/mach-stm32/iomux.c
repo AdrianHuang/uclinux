@@ -28,6 +28,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/io.h>
 
 #include <mach/iomux.h>
 #include <mach/platform.h>
@@ -111,6 +112,11 @@
 #define STM32F2_GPIO_AF_SDIO	0x0C
 
 /*
+ * System Configuration Controller Clock Enable
+ */
+#define RCC_APB2ENR_SYSCFGEN		(1<<14)
+
+/*
  * GPIO roles (alternative functions); role determines by whom GPIO is used
  */
 enum stm32f2_gpio_role {
@@ -135,7 +141,8 @@ enum stm32f2_gpio_role {
 	STM32F2_GPIO_ROLE_MCO,		/* MC external output clock	      */
 	STM32F2_GPIO_ROLE_OUT,		/* General purpose output	      */
 	STM32F2_GPIO_ROLE_IN,		/* General purpose input no pull      */
-	STM32F2_GPIO_ROLE_IN_PUP	/* General purpose input w/pullup     */
+	STM32F2_GPIO_ROLE_IN_PUP,	/* General purpose input w/pullup     */
+	STM32F2_GPIO_ROLE_INTR
 };
 
 /*
@@ -244,6 +251,11 @@ static int stm32f2_gpio_config(
 		ospeed = STM32F2_GPIO_SPEED_50M;
 		pupd   = STM32F2_GPIO_PUPD_UP;
 		break;
+	case STM32F2_GPIO_ROLE_INTR:
+		otype  = STM32F2_GPIO_OTYPE_PP;
+		ospeed = STM32F2_GPIO_SPEED_2M;
+		pupd   = STM32F2_GPIO_PUPD_UP;
+		break;
 	default:
 		rv = -EINVAL;
 		goto out;
@@ -262,7 +274,8 @@ static int stm32f2_gpio_config(
 	if (role != STM32F2_GPIO_ROLE_MCO &&
 	    role != STM32F2_GPIO_ROLE_OUT &&
 	    role != STM32F2_GPIO_ROLE_IN &&
-	    role != STM32F2_GPIO_ROLE_IN_PUP) {
+	    role != STM32F2_GPIO_ROLE_IN_PUP &&
+	    role != STM32F2_GPIO_ROLE_INTR) {
 
 		/*
 		 * Connect PXy to the specified controller (role)
@@ -292,6 +305,9 @@ static int stm32f2_gpio_config(
 		mode = STM32F2_GPIO_MODE_IN;
 	}
 	else if (role == STM32F2_GPIO_ROLE_IN_PUP) {
+		mode = STM32F2_GPIO_MODE_IN;
+	}
+	else if (role == STM32F2_GPIO_ROLE_INTR) {
 		mode = STM32F2_GPIO_MODE_IN;
 	}
 	else {
@@ -325,6 +341,10 @@ void __init stm32_iomux_init(void)
 {
 	struct stm32f2_gpio_dsc		gpio_dsc;
 	int				platform;
+
+#if defined(CONFIG_STM32_I2C3) && defined(CONFIG_TOUCHSCREEN_STMPE)
+	unsigned int v;
+#endif
 
 	/*
 	 * Configure IOs depending on the board we're running on, and
@@ -513,6 +533,16 @@ uartdone:
 		gpio_dsc.port = 2;	/* SDA */
 		gpio_dsc.pin  = 9;
 		stm32f2_gpio_config(&gpio_dsc, STM32F2_GPIO_ROLE_I2C3);
+
+#if defined(CONFIG_TOUCHSCREEN_STMPE)
+		gpio_dsc.port = 0;	/* INT of Touch Panel */
+		gpio_dsc.pin  = 15;
+		stm32f2_gpio_config(&gpio_dsc, STM32F2_GPIO_ROLE_INTR);
+
+		/* Enable system configuration controller clock. */
+		v = readl(&STM32_RCC->apb2enr);
+		writel(v | RCC_APB2ENR_SYSCFGEN, &STM32_RCC->apb2enr);
+#endif
 #endif
 
 #if defined(CONFIG_MMC_ARMMMCI) || defined(CONFIG_MMC_ARMMMCI_MODULE)
