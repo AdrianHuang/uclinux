@@ -31,12 +31,15 @@
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
 
+#include <mach/stm32.h>
 #include <mach/stm32-rng.h>
 #include <mach/gpio.h>
 
 #include "fb_moving_tux.h"
 
 #define PFX	KBUILD_MODNAME ": "
+
+#define STM32_RNG_BASE (STM32_AHB2PERITH_BASE + 0x60800)
 
 static int move_tux;
 static DECLARE_MUTEX(tux_mutex);
@@ -213,7 +216,6 @@ static int get_random_number(int val)
 static int update_steps(int *xy, int boundary)
 {
 	int random_num;
-	int steps;
 	int tmp = *xy;
 
 	/*
@@ -299,7 +301,7 @@ static ssize_t store_tux_ks(struct device *device,
 				struct device_attribute *attr, const char *buf,
 				size_t count)
 {
-	int value;
+	unsigned long value;
 
 	strict_strtoul(buf, 0, &value);
 
