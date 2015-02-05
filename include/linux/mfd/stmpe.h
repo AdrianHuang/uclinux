@@ -193,6 +193,15 @@ struct stmpe_platform_data {
 	bool autosleep;
 	int autosleep_timeout;
 
+	/*
+	 * The interrupt of stmpexxx is connected to External interrupt/event
+	 * controller (EXTI) on some MCUs (For example: stm32f429), so the
+	 * following definitions are needed.
+	 */
+	int exti_line;
+	void (*exti_enable_int) (unsigned int, int);
+	void (*exti_clear_pending) (unsigned int);
+
 	struct stmpe_gpio_platform_data *gpio;
 	struct stmpe_keypad_platform_data *keypad;
 	struct stmpe_ts_platform_data *ts;

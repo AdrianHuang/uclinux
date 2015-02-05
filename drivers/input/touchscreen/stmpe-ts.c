@@ -25,10 +25,6 @@
 
 #include <linux/mfd/stmpe.h>
 
-#ifdef CONFIG_ARCH_STM32
-#include <mach/exti.h>
-#endif
-
 /* Register layouts and functionalities are identical on all stmpexxx variants
  * with touchscreen controller
  */
@@ -169,9 +165,6 @@ static irqreturn_t stmpe_ts_handler(int irq, void *data)
 	/* start polling for touch_det to detect release */
 	schedule_delayed_work(&ts->work, HZ / 50);
 
-#ifdef CONFIG_ARCH_STM32
-	stm32_exti_clear_pending(STM32F2_EXTI_LINE_GPIO_15);
-#endif
 	return IRQ_HANDLED;
 }
 
@@ -349,11 +342,6 @@ static int __devinit stmpe_input_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Could not register input device\n");
 		goto err_free_irq;
 	}
-
-#ifdef CONFIG_ARCH_STM32
-	/* Enable the exti interrupt of GPIO pin 15, which maps to EXTI15. */
-	stm32_exti_enable_int(STM32F2_EXTI_LINE_GPIO_15, 1);
-#endif
 
 	return ret;
 
