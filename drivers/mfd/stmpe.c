@@ -665,6 +665,7 @@ static irqreturn_t stmpe_irq(int irq, void *data)
 {
 	struct stmpe *stmpe = data;
 	struct stmpe_variant_info *variant = stmpe->variant;
+	struct stmpe_platform_data *pdata = stmpe->pdata;
 	int num = DIV_ROUND_UP(variant->num_irqs, 8);
 	u8 israddr = stmpe->regs[STMPE_IDX_ISR_MSB];
 	u8 isr[num];
@@ -695,6 +696,9 @@ static irqreturn_t stmpe_irq(int irq, void *data)
 
 		stmpe_reg_write(stmpe, israddr + i, clear);
 	}
+
+	if (pdata && pdata->exti_clear_pending)
+		pdata->exti_clear_pending(pdata->exti_line);
 
 	return IRQ_HANDLED;
 }
@@ -946,6 +950,10 @@ static int __devinit stmpe_probe(struct i2c_client *i2c,
 		dev_err(stmpe->dev, "failed to add children\n");
 		goto out_removedevs;
 	}
+
+	/* Enable the exti interrupt if this callback is available. */
+	if (pdata->exti_enable_int)
+		pdata->exti_enable_int(pdata->exti_line, 1);
 
 	return 0;
 

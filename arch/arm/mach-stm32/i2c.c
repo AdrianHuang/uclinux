@@ -35,6 +35,7 @@
 #endif
 
 #if defined(CONFIG_MFD_STMPE)
+#include <mach/exti.h>
 #include <linux/mfd/stmpe.h>
 #endif
 
@@ -240,10 +241,13 @@ void __init stm32_i2c_init(void)
 
 #if defined(CONFIG_MFD_STMPE)
 		static struct stmpe_platform_data stmpe811_ioe_info = {
-			.id             = 0,
-		        .blocks         = STMPE_BLOCK_TOUCHSCREEN,
-			.irq_trigger    = IRQF_TRIGGER_FALLING,
-			.irq_base	= STMPE811_IRQ_BASE,
+			.id             	= 0,
+		        .blocks         	= STMPE_BLOCK_TOUCHSCREEN,
+			.irq_trigger    	= IRQF_TRIGGER_FALLING,
+			.irq_base		= STMPE811_IRQ_BASE,
+			.exti_line		= STM32F2_EXTI_LINE_GPIO_15,
+			.exti_enable_int 	= stm32_exti_enable_int,
+			.exti_clear_pending	= stm32_exti_clear_pending
 		};
 #endif
 
