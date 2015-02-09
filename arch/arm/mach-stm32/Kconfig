@@ -7,12 +7,46 @@ config MACH_STM32
 	help
 	  Include support for the STMicro STM32F2 microcontroller
 
+choice
+	prompt "Choose one of STM32F devices"
+	depends on ARCH_STM32
+
 config ARCH_STM32F1
 	bool "Support STM32F1 instead of STM32F2"
-	default n
-	depends on ARCH_STM32
 	help
 	  Build kernel for the STMicro STM32F1 MCU instead of STM32F2
+
+config ARCH_STM32F2
+	bool "Support STM32F2 (STM32F20x and STM32F21x devices)"
+	help
+	  Build kernel for the STMicro STM32F2 MCU
+
+config ARCH_STM32F3
+	bool "Support STM32F3 (STM32F3xx devices)"
+	help
+	  Build kernel for the STMicro STM32F3 MCU
+
+config ARCH_STM32F40
+	bool "Support STM32F40 (STM32F405xx/07xx devices)"
+	help
+	  Build kernel for the STMicro STM32F40 MCU
+
+config ARCH_STM32F41
+	bool "Support STM32F41 (STM32F415xx/17xx devices)"
+	help
+	  Build kernel for the STMicro STM32F41 MCU
+
+config ARCH_STM32F42
+	bool "Support STM32F42 (STM32F42xxx devices)"
+	help
+	  Build kernel for the STMicro STM32F42 MCU
+
+config ARCH_STM32F43
+	bool "Support STM32F43 (STM32F4xxx devices)"
+	help
+	  Build kernel for the STMicro STM32F43 MCU
+
+endchoice
 
 menu "STM32 I/O interfaces"
 	depends on ARCH_STM32
