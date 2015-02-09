@@ -34,7 +34,8 @@
 #include <linux/i2c/pcal6416a.h>
 #endif
 
-#if defined(CONFIG_MFD_STMPE)
+#if defined(CONFIG_MFD_STMPE) && \
+    (defined(CONFIG_ARCH_STM32F42) || defined(CONFIG_ARCH_STM32F43))
 #include <mach/exti.h>
 #include <linux/mfd/stmpe.h>
 #endif
@@ -144,7 +145,8 @@ static struct i2c_stm32_data i2c_stm32_data_dev3 = {
 	.i2c_clk	= 100000,
 };
 
-#if defined(CONFIG_MFD_STMPE)
+#if defined(CONFIG_MFD_STMPE) && \
+    (defined(CONFIG_ARCH_STM32F42) || defined(CONFIG_ARCH_STM32F43))
 
 /*
  * Touch Panel Interrrupt (TP_INT1) through EXTI line interrupt.
@@ -239,7 +241,8 @@ void __init stm32_i2c_init(void)
 		};
 #endif
 
-#if defined(CONFIG_MFD_STMPE)
+#if defined(CONFIG_MFD_STMPE) && \
+    (defined(CONFIG_ARCH_STM32F42) || defined(CONFIG_ARCH_STM32F43))
 		static struct stmpe_platform_data stmpe811_ioe_info = {
 			.id             	= 0,
 		        .blocks         	= STMPE_BLOCK_TOUCHSCREEN,
@@ -266,7 +269,8 @@ void __init stm32_i2c_init(void)
 		},
 #endif
 
-#if defined(CONFIG_MFD_STMPE)
+#if defined(CONFIG_MFD_STMPE) && \
+    (defined(CONFIG_ARCH_STM32F42) || defined(CONFIG_ARCH_STM32F43))
 	        {
 			I2C_BOARD_INFO("stmpe811", 0x41),
 			.platform_data = &stmpe811_ioe_info,
