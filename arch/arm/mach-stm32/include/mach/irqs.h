@@ -24,12 +24,29 @@
 #ifndef __ASM_ARCH_IRQS_H
 #define __ASM_ARCH_IRQS_H
 
-#ifdef CONFIG_ARCH_STM32F1
+#if defined(CONFIG_ARCH_STM32F1)
 #define NR_IRQS		68	/* STM32F1 */
-#elif CONFIG_MFD_STMPE
-#define NR_IRQS		99	/* STM32F4 + 8 internal interrupts (stmpe811) */
+
+#elif defined(CONFIG_ARCH_STM32F2)
+#define NR_IRQS		81	/* STM32F2 */
+
+#elif defined(CONFIG_ARCH_STM32F3)  || \
+      defined(CONFIG_ARCH_STM32F40) || \
+      defined(CONFIG_ARCH_STM32F41)
+#define NR_IRQS		82	/* STM32F3x, STM32F40xxx, and STM32F41xxx */
+
 #else
-#define NR_IRQS		91	/* STM32F4 */
+#define NR_IRQS		91	/* STM32F42xxx, STM32F43xxx and others */
+#endif
+
+/*
+ * Re-define NR_IRQS if the stmpe811 driver is compiled for
+ * stm32f42/stm32f43 MCUs.
+ */
+#if defined(CONFIG_MFD_STMPE) && \
+    (defined(CONFIG_ARCH_STM32F42) || defined(CONFIG_ARCH_STM32F43))
+#undef NR_IRQS
+#define NR_IRQS		99	/* STM32F42 + 8 internal interrupts (stmpe811)*/
 #endif
 
 #endif
