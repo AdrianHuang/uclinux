@@ -36,6 +36,11 @@
 
 #if defined(CONFIG_MFD_STMPE) && \
     (defined(CONFIG_ARCH_STM32F42) || defined(CONFIG_ARCH_STM32F43))
+
+#if defined(CONFIG_STM32_TS)
+#include <mach/ts.h>
+#endif
+
 #include <mach/exti.h>
 #include <linux/mfd/stmpe.h>
 #endif
@@ -243,6 +248,13 @@ void __init stm32_i2c_init(void)
 
 #if defined(CONFIG_MFD_STMPE) && \
     (defined(CONFIG_ARCH_STM32F42) || defined(CONFIG_ARCH_STM32F43))
+
+#if defined(CONFIG_STM32_TS)
+		static struct stmpe_ts_platform_data stmpe811_ts_info = {
+			.coordinate_calibration = stm32f4_ts_calibration
+		};
+#endif
+
 		static struct stmpe_platform_data stmpe811_ioe_info = {
 			.id             	= 0,
 		        .blocks         	= STMPE_BLOCK_TOUCHSCREEN,
@@ -250,7 +262,10 @@ void __init stm32_i2c_init(void)
 			.irq_base		= STMPE811_IRQ_BASE,
 			.exti_line		= STM32F2_EXTI_LINE_GPIO_15,
 			.exti_enable_int 	= stm32_exti_enable_int,
-			.exti_clear_pending	= stm32_exti_clear_pending
+			.exti_clear_pending	= stm32_exti_clear_pending,
+#if defined(CONFIG_STM32_TS)
+			.ts			= &stmpe811_ts_info
+#endif
 		};
 #endif
 

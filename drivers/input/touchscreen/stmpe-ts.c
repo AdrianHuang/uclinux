@@ -67,6 +67,7 @@ struct stmpe_touch {
 	struct input_dev *idev;
 	struct delayed_work work;
 	struct device *dev;
+	void (*coordinate_calibration) (int *, int *);
 	u8 sample_time;
 	u8 mod_12b;
 	u8 ref_sel;
@@ -148,6 +149,9 @@ static irqreturn_t stmpe_ts_handler(int irq, void *data)
 	x = (data_set[0] << 4) | (data_set[1] >> 4);
 	y = ((data_set[1] & 0xf) << 8) | data_set[2];
 	z = data_set[3];
+
+	if (ts->coordinate_calibration)
+		ts->coordinate_calibration(&x, &y);
 
 	input_report_abs(ts->idev, ABS_X, x);
 	input_report_abs(ts->idev, ABS_Y, y);
@@ -298,6 +302,7 @@ static int __devinit stmpe_input_probe(struct platform_device *pdev)
 		ts_pdata = pdata->ts;
 
 	if (ts_pdata) {
+		ts->coordinate_calibration = ts_pdata->coordinate_calibration;
 		ts->sample_time = ts_pdata->sample_time;
 		ts->mod_12b = ts_pdata->mod_12b;
 		ts->ref_sel = ts_pdata->ref_sel;
