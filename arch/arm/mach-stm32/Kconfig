@@ -48,6 +48,11 @@ config ARCH_STM32F43
 
 endchoice
 
+config STM32_TS
+	depends on ARCH_STM32 && MFD_STMPE
+	bool "Touch controller (stmpe811) coordinate calibration"
+	default n
+
 menu "STM32 I/O interfaces"
 	depends on ARCH_STM32
 
