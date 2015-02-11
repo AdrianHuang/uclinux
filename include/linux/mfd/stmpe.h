@@ -160,6 +160,7 @@ struct stmpe_gpio_platform_data {
  * */
 struct stmpe_ts_platform_data {
        void (*coordinate_calibration) (int *, int *);
+       void (*notify_tux) (int, int, int);
        u8 sample_time;
        u8 mod_12b;
        u8 ref_sel;

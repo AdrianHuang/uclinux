@@ -68,6 +68,7 @@ struct stmpe_touch {
 	struct delayed_work work;
 	struct device *dev;
 	void (*coordinate_calibration) (int *, int *);
+	void (*notify_tux) (int, int, int);
 	u8 sample_time;
 	u8 mod_12b;
 	u8 ref_sel;
@@ -121,6 +122,9 @@ static void stmpe_work(struct work_struct *work)
 	input_report_abs(ts->idev, ABS_PRESSURE, 0);
 	input_report_key(ts->idev, BTN_TOUCH, 0);
 	input_sync(ts->idev);
+
+	if (ts->notify_tux)
+		ts->notify_tux(0, 0, 0);
 }
 
 static irqreturn_t stmpe_ts_handler(int irq, void *data)
@@ -168,6 +172,9 @@ static irqreturn_t stmpe_ts_handler(int irq, void *data)
 
 	/* start polling for touch_det to detect release */
 	schedule_delayed_work(&ts->work, HZ / 50);
+
+	if (ts->notify_tux)
+		ts->notify_tux(x, y, 1);
 
 	return IRQ_HANDLED;
 }
@@ -303,6 +310,7 @@ static int __devinit stmpe_input_probe(struct platform_device *pdev)
 
 	if (ts_pdata) {
 		ts->coordinate_calibration = ts_pdata->coordinate_calibration;
+		ts->notify_tux = ts_pdata->notify_tux;
 		ts->sample_time = ts_pdata->sample_time;
 		ts->mod_12b = ts_pdata->mod_12b;
 		ts->ref_sel = ts_pdata->ref_sel;
@@ -347,6 +355,15 @@ static int __devinit stmpe_input_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Could not register input device\n");
 		goto err_free_irq;
 	}
+
+	/*
+	 * Invoking the open routine in the probe routine is not encouraged.
+	 * It is invoked just because of the Moving Tux project. This project
+	 * aims to move the Tux randomly in LCD-TFT of stm32f429 discovery
+	 * board, And, the user can touch the touchscreen controller to change
+	 * the position of the Tux.
+	 */
+	stmpe_ts_open(idev);
 
 	return ret;
 

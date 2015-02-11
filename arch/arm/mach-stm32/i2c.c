@@ -45,6 +45,10 @@
 #include <linux/mfd/stmpe.h>
 #endif
 
+#if defined(CONFIG_FB_MOVING_TUX)
+extern void notify_moving_tux(int, int, int);
+#endif
+
 /* 
  * Size of the I2C controller register area
  */
@@ -251,7 +255,10 @@ void __init stm32_i2c_init(void)
 
 #if defined(CONFIG_STM32_TS)
 		static struct stmpe_ts_platform_data stmpe811_ts_info = {
-			.coordinate_calibration = stm32f4_ts_calibration
+			.coordinate_calibration = stm32f4_ts_calibration,
+#if defined(CONFIG_FB_MOVING_TUX)
+			.notify_tux		= notify_moving_tux
+#endif
 		};
 #endif
 

@@ -51,6 +51,14 @@ static void (*fb_show_logo_fn)(struct fb_info *, struct fb_image *,
 static void  (*fb_set_logo_truepalette_fn)(struct fb_info *,
 					const struct linux_logo *, u32 *);
 
+struct ts_info {
+	int x;
+	int y;
+	int touch_detected;
+};
+
+static struct ts_info ts;
+
 static int is_prime_number(unsigned int var)
 {
 	int n = var;
@@ -248,12 +256,26 @@ static void tux_change_move_tux_flag(void)
 	up(&tux_mutex);
 }
 
+static void tux_get_display_xy(int ts_xy, int hw, int *xy, int boundary)
+{
+	int diff = ts_xy - hw;
+
+	if (diff < 0) {
+		*xy = 0;
+	} else if (ts_xy > boundary)  {
+		*xy = boundary;
+	} else {
+		*xy = diff;
+	}
+
+}
+
 static int tux_thread(void *data)
 {
 	struct fb_info *info = fb_get_info();
 	struct linux_logo *logo = fb_get_logo();
 	int x_steps = 0, y_steps = 0;
-	int *x, *y;
+	int *x, *y, x_boundary, y_boundary;
 
 	if (!info || !logo)
 		return -1;
@@ -263,7 +285,25 @@ static int tux_thread(void *data)
 	x = &info->var.xoffset;
 	y = &info->var.yoffset;
 
+	x_boundary = info->var.xres - logo->width;
+	y_boundary = info->var.yres - logo->height;
+
 	while (!kthread_should_stop()) {
+
+		if (ts.touch_detected) {
+			tux_get_display_xy(ts.x, logo->width / 2, x,
+					x_boundary);
+			tux_get_display_xy(ts.y, logo->height / 2, y,
+					y_boundary);
+
+			/*
+			 * Display new position of Tux if the move_tux
+			 * flag is not set.
+			 */
+			if (!move_tux)
+				moving_tux(*x, *y);
+		}
+
 		if (gpio_get_value(STM32_USER_BUTTON)) {
 			/* Wait for the button released by user. */
 			while (gpio_get_value(STM32_USER_BUTTON))
@@ -272,24 +312,20 @@ static int tux_thread(void *data)
 			tux_change_move_tux_flag();
 		}
 
-		if (!move_tux) {
-			/* Wait 100ms. */
-			set_current_state(TASK_INTERRUPTIBLE);
-			schedule_timeout(msecs_to_jiffies(100));
+		if (!move_tux)
+			goto reschedule_thread;
 
-			continue;
-		}
-
-		if (check_range(info, logo, *x, *y, REACH_RANGE)) {
-			x_steps = update_steps(x,
-					info->var.xres - logo->width);
-			y_steps = update_steps(y,
-					info->var.yres - logo->height);
+		if (ts.touch_detected || (!x_steps && !y_steps) ||
+			check_range(info, logo, *x, *y,	REACH_RANGE)) {
+			x_steps = update_steps(x, x_boundary);
+			y_steps = update_steps(y, y_boundary);
 		}
 
 		moving_tux(*x, *y);
 		*x += x_steps;
 		*y += y_steps;
+
+reschedule_thread:
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule_timeout(msecs_to_jiffies(100)); /* wait 100ms */
 	}
@@ -323,6 +359,25 @@ static ssize_t show_tux_ks(struct device *device,
 static struct device_attribute device_attrs[] = {
 	__ATTR(kickstart, S_IRUGO|S_IWUSR, show_tux_ks, store_tux_ks),
 };
+
+void notify_moving_tux(int x, int y, int touch_detected)
+{
+	if (!touch_detected) {
+		ts.touch_detected = 0;
+		return;
+	}
+
+	if (ts.x == x && ts.y == y)
+		return;
+
+	ts.x = x;
+	ts.y = y;
+
+	if (!ts.touch_detected)
+		ts.touch_detected = 1;
+
+	return;
+}
 
 static int __init moving_tux_init(void)
 {
@@ -366,6 +421,7 @@ static int __init moving_tux_init(void)
 
 static void __exit moving_tux_exit(void)
 {
+	kthread_stop(moving_tux_thread);
 	return;
 }
 
